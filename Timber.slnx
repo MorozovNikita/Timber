@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Timber.vcxproj" Id="f0e37455-f4af-41c7-b395-2f18f0a6b0e5" />
+</Solution>
