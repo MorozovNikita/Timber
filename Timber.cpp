@@ -1,23 +1,60 @@
-﻿// Timber.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
-
-#include <iostream>
+﻿#include <iostream>
 
 #include <SFML/Graphics.hpp>
+
+#include "FileDefs.h"
+#include "TextureSizes.h"
 
 using namespace sf;
 
 int main()
 {
     VideoMode vm({ 1920, 1080 });
-
     RenderWindow window(vm, "Timber!");
 
     Texture textureBackground;
-    textureBackground.loadFromFile("graphics/background.png");
+    if (!textureBackground.loadFromFile(TimberFiles::backGroundName))
+        std::cerr << "Failed to upload file" << std::endl;
 
     Sprite spriteBackground(textureBackground);
     spriteBackground.setPosition({ 0, 0 });
+
+    Texture textureTree;
+    if (!textureTree.loadFromFile(TimberFiles::treeName))
+        std::cerr << "Failed to upload file" << std::endl;
+
+    Sprite spriteTree(textureTree);
+    spriteTree.setPosition({ TS::TREE_HORIZONTAL_POSITION, TS::TREE_VERTICAL_POSITION });
+
+    Texture textureBee;
+    if (!textureBee.loadFromFile(TimberFiles::beeName))
+        std::cerr << "Failed to upload file" << std::endl;
+
+    Sprite spriteBee(textureBee);
+    spriteBee.setPosition({ TS::BEE_HORIZONTAL_POSITION, TS::BEE_VERTICAL_POSITION });
+
+    bool beeActive{ false };
+    float beeSpeed{ 0.0f };
+
+    Texture textureCloud;
+    if (!textureCloud.loadFromFile(TimberFiles::cloudName))
+        std::cerr << "Failed to upload file" << std::endl;
+
+    Sprite spriteCloud1(textureCloud);
+    Sprite spriteCloud2(textureCloud);
+    Sprite spriteCloud3(textureCloud);
+
+    spriteCloud1.setPosition({ TS::CLOUD1_HORIZONTAL_POSITION, TS::CLOUD1_VERTICAL_POSITION });
+    spriteCloud2.setPosition({ TS::CLOUD2_HORIZONTAL_POSITION, TS::CLOUD2_VERTICAL_POSITION });
+    spriteCloud3.setPosition({ TS::CLOUD3_HORIZONTAL_POSITION, TS::CLOUD3_VERTICAL_POSITION });
+
+    bool cloud1Active{false};
+    bool cloud2Active{false};
+    bool cloud3Active{false};
+
+    float cloud1Speed{ 0.0f };
+    float cloud2Speed{ 0.0f };
+    float cloud3Speed{ 0.0f };
 
     while (window.isOpen())
     {
@@ -28,20 +65,16 @@ int main()
 
         window.draw(spriteBackground);
 
+        window.draw(spriteCloud1);
+        window.draw(spriteCloud2);
+        window.draw(spriteCloud3);
+
+        window.draw(spriteTree);
+        
+        window.draw(spriteBee);
+
         window.display();
-        // window.display();
     }
 
     return 0;
 }
-
-// Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
-// Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
-
-// Советы по началу работы 
-//   1. В окне обозревателя решений можно добавлять файлы и управлять ими.
-//   2. В окне Team Explorer можно подключиться к системе управления версиями.
-//   3. В окне "Выходные данные" можно просматривать выходные данные сборки и другие сообщения.
-//   4. В окне "Список ошибок" можно просматривать ошибки.
-//   5. Последовательно выберите пункты меню "Проект" > "Добавить новый элемент", чтобы создать файлы кода, или "Проект" > "Добавить существующий элемент", чтобы добавить в проект существующие файлы кода.
-//   6. Чтобы снова открыть этот проект позже, выберите пункты меню "Файл" > "Открыть" > "Проект" и выберите SLN-файл.
