@@ -11,4 +11,6 @@ static const std::string_view treeName       = "graphics/tree.png"sv;
 static const std::string_view beeName		 = "graphics/bee.png"sv;
 static const std::string_view cloudName		 = "graphics/cloud.png"sv;
 
+static const std::string_view fontName		 = "fonts/KOMIKABG.ttf"sv;
+
 }
