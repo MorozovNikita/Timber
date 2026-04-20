@@ -60,6 +60,17 @@ int main()
 
     Clock clock;
 
+    RectangleShape timeBar;
+    float timeBarStartWidth{ 400.f };
+    float timeBarHeight{ 80.f };
+    timeBar.setSize({ timeBarStartWidth, timeBarHeight });
+    timeBar.setFillColor(Color::Red);
+    timeBar.setPosition({ (1920 / 2) - timeBarStartWidth / 2, 980 });
+
+    Time gameTimeTotal;
+    float timeRemaining{ 6.0f };
+    float timeBarWidthPerSecond{ timeBarStartWidth / timeRemaining };
+
     bool paused{ true };
 
     int score{ 0 };
@@ -87,11 +98,31 @@ int main()
             window.close();
 
         if (Keyboard::isKeyPressed(Keyboard::Key::Enter))
+        {
             paused = false;
+
+            score = 0;
+            timeRemaining = 6;
+        }
 
         if (!paused)
         {
             Time dt = clock.restart();
+
+            timeRemaining -= dt.asSeconds();
+            timeBar.setSize({ timeBarWidthPerSecond * timeRemaining, timeBarHeight });
+
+            if (timeRemaining <= 0.0f)
+            {
+                paused = true;
+                
+                messageText.setString("Time's up!"s);
+
+                FloatRect textRect = messageText.getLocalBounds();
+                messageText.setOrigin({ textRect.position.x + textRect.size.x / 2.f, textRect.position.y + textRect.size.y / 2.f });
+                messageText.setPosition({ 1920 / 2.f, 1080 / 2.f });
+            }
+
             if (!beeActive)
             {
                 srand((int)time(0));
@@ -178,6 +209,8 @@ int main()
         window.draw(spriteBee);
 
         window.draw(scoreText);
+
+        window.draw(timeBar);
 
         if (paused)
             window.draw(messageText);
