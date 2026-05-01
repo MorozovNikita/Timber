@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <sstream>
+#include <vector>
 
 #include <SFML/Graphics.hpp>
 
@@ -8,6 +9,24 @@
 
 using namespace sf;
 using namespace std::literals;
+
+const int NUM_CLOUDS = 3;
+std::vector<Sprite> clouds;
+std::vector<bool> cloudsActive{ false, false, false };
+std::vector<float> cloudsSpeed{ 0.0f, 0.0f, 0.0f };
+
+void initClouds(Texture& textureCloud);
+void placementClouds(Time& dt);
+
+const int NUM_BRANCHES = 6;
+std::vector<Sprite> branches;
+
+void initBranches(Texture& textureBranch);
+void placementBranches();
+void updateBranches(int seed);
+
+enum class side { LEFT, RIGHT, NONE };
+side branchPositions[NUM_BRANCHES];
 
 int main()
 {
@@ -42,21 +61,7 @@ int main()
     if (!textureCloud.loadFromFile(TimberFiles::cloudName))
         std::cerr << "Failed to upload file"s << std::endl;
 
-    Sprite spriteCloud1(textureCloud);
-    Sprite spriteCloud2(textureCloud);
-    Sprite spriteCloud3(textureCloud);
-
-    spriteCloud1.setPosition({ TS::CLOUD1_HORIZONTAL_POSITION, TS::CLOUD1_VERTICAL_POSITION });
-    spriteCloud2.setPosition({ TS::CLOUD2_HORIZONTAL_POSITION, TS::CLOUD2_VERTICAL_POSITION });
-    spriteCloud3.setPosition({ TS::CLOUD3_HORIZONTAL_POSITION, TS::CLOUD3_VERTICAL_POSITION });
-
-    bool cloud1Active{false};
-    bool cloud2Active{false};
-    bool cloud3Active{false};
-
-    float cloud1Speed{ 0.0f };
-    float cloud2Speed{ 0.0f };
-    float cloud3Speed{ 0.0f };
+    initClouds(textureCloud);
 
     Clock clock;
 
@@ -92,6 +97,12 @@ int main()
     messageText.setPosition({ 1920 / 2.f, 1080 / 2.f });
     scoreText.setPosition({ 20, 20 });
 
+    Texture textureBranch;
+    if (!textureBranch.loadFromFile(TimberFiles::branchName))
+        std::cerr << "Failed to upload file"s << std::endl;
+
+    initBranches(textureBranch);
+
     while (window.isOpen())
     {
         if (Keyboard::isKeyPressed(Keyboard::Key::Escape))
@@ -126,10 +137,10 @@ int main()
             if (!beeActive)
             {
                 srand((int)time(0));
-                beeSpeed = (rand() % 200) + 200;
+                beeSpeed = static_cast<float>((rand() % 200) + 200);
 
                 srand((int)time(0) * 10);
-                float height = (rand() % 500) + 500;
+                float height = static_cast<float>((rand() % 500) + 500);
                 spriteBee.setPosition({ 2000, height });
                 beeActive = true;
             }
@@ -140,69 +151,24 @@ int main()
                     beeActive = false;
             }
 
-            if (!cloud1Active)
-            {
-                srand((int)time(0) * 10);
-                cloud1Speed = (rand() % 200);
-
-                srand((int)time(0) * 10);
-                float height = (rand() % 150);
-                spriteCloud1.setPosition({ -200, height });
-                cloud1Active = true;
-            }
-            else
-            {
-                spriteCloud1.setPosition({ spriteCloud1.getPosition().x + (cloud1Speed * dt.asSeconds()), spriteCloud1.getPosition().y });
-                if (spriteCloud1.getPosition().x > 1920)
-                    cloud1Active = false;
-            }
-
-            if (!cloud2Active)
-            {
-                srand((int)time(0) * 20);
-                cloud2Speed = (rand() % 200);
-
-                srand((int)time(0) * 20);
-                float height = (rand() % 300) - 150;
-                spriteCloud2.setPosition({ -200, height });
-                cloud2Active = true;
-            }
-            else
-            {
-                spriteCloud2.setPosition({ spriteCloud2.getPosition().x + (cloud2Speed * dt.asSeconds()), spriteCloud2.getPosition().y });
-                if (spriteCloud2.getPosition().x > 1920)
-                    cloud2Active = false;
-            }
-
-            if (!cloud3Active)
-            {
-                srand((int)time(0) * 30);
-                cloud3Speed = (rand() % 200);
-
-                srand((int)time(0) * 30);
-                float height = (rand() % 450) - 150;
-                spriteCloud3.setPosition({ -200, height });
-                cloud3Active = true;
-            }
-            else
-            {
-                spriteCloud3.setPosition({ spriteCloud3.getPosition().x + (cloud3Speed * dt.asSeconds()), spriteCloud3.getPosition().y });
-                if (spriteCloud3.getPosition().x > 1920)
-                    cloud3Active = false;
-            }
+            placementClouds(dt);
 
             std::stringstream ss;
             ss << "Score = " << score;
             scoreText.setString(ss.str());
+
+            placementBranches();
         }
 
         window.clear();
 
         window.draw(spriteBackground);
 
-        window.draw(spriteCloud1);
-        window.draw(spriteCloud2);
-        window.draw(spriteCloud3);
+        for (int i = 0; i < NUM_CLOUDS; ++i)
+            window.draw(clouds[i]);
+
+        for (int i = 0; i < NUM_BRANCHES; ++i)
+            window.draw(branches[i]);
 
         window.draw(spriteTree);
         
@@ -219,4 +185,103 @@ int main()
     }
 
     return 0;
+}
+
+void initClouds(Texture& textureCloud)
+{
+    clouds.reserve(NUM_CLOUDS);
+
+    float cloudHorizontalPosition{ 0 };
+    float cloudVerticalPosition{ 0 };
+
+    for (int i = 0; i < NUM_CLOUDS; ++i)
+    {
+        clouds.emplace_back(textureCloud);
+        clouds[i].setPosition({ cloudHorizontalPosition, cloudVerticalPosition });
+
+        cloudVerticalPosition += 250;
+    }
+}
+
+void placementClouds(Time& dt)
+{
+    int seeds[]   = { 10, 20, 30 };
+    int mods[]    = { 150, 300, 450 };
+    int offsets[] = { 0, 150, 150 };
+
+    for (int i = 0; i < NUM_CLOUDS; ++i)
+    {
+        if (cloudsActive[i])
+        {
+            clouds[i].setPosition({ clouds[i].getPosition().x + (cloudsSpeed[i] * dt.asSeconds()), clouds[i].getPosition().y });
+            if (clouds[i].getPosition().x > 1920)
+                cloudsActive[i] = false;
+        }
+        else
+        {
+            srand((int)time(0) * seeds[i]);
+            cloudsSpeed[i] = static_cast<float>((rand() % 200));
+
+            srand((int)time(0) * seeds[i]);
+            float height = static_cast<float>((rand() % mods[i]) - offsets[i]);
+            clouds[i].setPosition({ -200, height });
+            cloudsActive[i] = true;
+        }
+    }
+}
+
+void initBranches(Texture& textureBranch)
+{
+    branches.reserve(NUM_BRANCHES);
+    for (int i = 0; i < NUM_BRANCHES; ++i)
+    {
+        branches.emplace_back(textureBranch);
+        branches[i].setPosition({ -2000, -2000 });
+        branches[i].setOrigin({ 220, 20 });
+    }
+}
+
+void placementBranches()
+{
+    for (int i = 0; i < NUM_BRANCHES; ++i)
+    {
+        float height = i * 150.f;
+
+        switch (branchPositions[i])
+        {
+        case side::LEFT:
+            branches[i].setPosition({ 610, height });
+            branches[i].setRotation(degrees(180));
+            break;
+        case side::RIGHT:
+            branches[i].setPosition({ 1330, height });
+            branches[i].setRotation(degrees(0));
+            break;
+        default:
+            branches[i].setPosition({ 3000, height });
+            break;
+        }
+    }
+}
+
+void updateBranches(int seed)
+{
+    for (int i = NUM_BRANCHES - 1; i > 0; --i)
+        branchPositions[i] = branchPositions[i - 1];
+
+    srand((int)time(0) + seed);
+    int r = (rand() % 5);
+
+    switch (r)
+    {
+    case 0:
+        branchPositions[0] = side::LEFT;
+        break;
+    case 1:
+        branchPositions[0] = side::RIGHT;
+        break;
+    default:
+        branchPositions[0] = side::NONE;
+        break;
+    }
 }
