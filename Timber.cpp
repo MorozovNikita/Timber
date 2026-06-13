@@ -103,6 +103,39 @@ int main()
 
     initBranches(textureBranch);
 
+    Texture texturePlayer;
+    if (!texturePlayer.loadFromFile(TimberFiles::playerName))
+        std::cerr << "Failed to upload file"s << std::endl;
+    Sprite spritePlayer(texturePlayer);
+    spritePlayer.setPosition({ 580, 720 });
+
+    side playerSide = side::LEFT;
+
+    Texture textureRIP;
+    if (!textureRIP.loadFromFile(TimberFiles::graveName))
+        std::cerr << "Failed to upload file"s << std::endl;
+    Sprite spriteRIP(textureRIP);
+    spriteRIP.setPosition({ 600, 860 });
+
+    Texture textureAxe;
+    if (!textureAxe.loadFromFile(TimberFiles::axeName))
+        std::cerr << "Failed to upload file"s << std::endl;
+    Sprite spriteAxe(textureAxe);
+    spriteAxe.setPosition({ 700, 830 });
+
+    const float AXE_POSITION_LEFT{ 700 };
+    const float AXE_POSITION_RIGHT{ 1075 };
+
+    Texture textureLog;
+    if (!textureLog.loadFromFile(TimberFiles::logName))
+        std::cerr << "Failed to upload file"s << std::endl;
+    Sprite spriteLog(textureLog);
+    spriteLog.setPosition({ 810, 720 });
+    
+    bool logActive{ false };
+    float logSpeedX{ 1000 };
+    float logSpeedY{ -1500 };
+
     while (window.isOpen())
     {
         if (Keyboard::isKeyPressed(Keyboard::Key::Escape))
@@ -171,6 +204,14 @@ int main()
             window.draw(branches[i]);
 
         window.draw(spriteTree);
+
+        window.draw(spritePlayer);
+
+        window.draw(spriteAxe);
+
+        window.draw(spriteLog);
+
+        window.draw(spriteRIP);
         
         window.draw(spriteBee);
 
@@ -224,7 +265,7 @@ void placementClouds(Time& dt)
 
             srand((int)time(0) * seeds[i]);
             float height = static_cast<float>((rand() % mods[i]) - offsets[i]);
-            clouds[i].setPosition({ -200, height });
+            clouds[i].setPosition({ -300, height });
             cloudsActive[i] = true;
         }
     }
