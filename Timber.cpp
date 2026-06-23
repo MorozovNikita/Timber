@@ -136,8 +136,23 @@ int main()
     float logSpeedX{ 1000 };
     float logSpeedY{ -1500 };
 
+    bool acceptInput{ false };
+
     while (window.isOpen())
     {
+        while (std::optional event = window.pollEvent())
+        {
+            if (event->is<sf::Event::Closed>())
+            {
+                window.close();
+            }
+            else if (event->is<sf::Event::KeyReleased>() && !paused)
+            {
+                acceptInput = true;
+                spriteAxe.setPosition({ 2000, spriteAxe.getPosition().y });
+            }
+        }
+
         if (Keyboard::isKeyPressed(Keyboard::Key::Escape))
             window.close();
 
@@ -147,6 +162,63 @@ int main()
 
             score = 0;
             timeRemaining = 6;
+
+            for (int i = 1; i < NUM_BRANCHES; ++i)
+                branchPositions[i] = side::NONE;
+
+            spriteRIP.setPosition({ 675, 2000 });
+
+            spritePlayer.setPosition({ 580, 720 });
+
+            acceptInput = true;
+        }
+
+        if (acceptInput)
+        {
+            if (Keyboard::isKeyPressed(Keyboard::Key::Right))
+            {
+                playerSide = side::RIGHT;
+
+                ++score;
+
+                // time addition formula
+                timeRemaining += (2. / score) + .15;
+
+                spriteAxe.setPosition({ AXE_POSITION_RIGHT, spriteAxe.getPosition().y });
+
+                spritePlayer.setPosition({ 1200, 720 });
+
+                updateBranches(score);
+
+                spriteLog.setPosition({ 810, 720 });
+                logSpeedX = -5000;
+                logActive = true;
+
+                acceptInput = false;
+            }
+
+            if (Keyboard::isKeyPressed(Keyboard::Key::Left))
+            {
+                playerSide = side::LEFT;
+
+                ++score;
+
+                // time addition formula
+                timeRemaining += (2. / score) + .15;
+
+                spriteAxe.setPosition({ AXE_POSITION_LEFT, spriteAxe.getPosition().y });
+
+                spritePlayer.setPosition({ 580, 720 });
+
+                updateBranches(score);
+
+                spriteLog.setPosition({ 810, 720 });
+
+                logSpeedX = 5000;
+                logActive = true;
+
+                acceptInput = false;
+            }
         }
 
         if (!paused)
