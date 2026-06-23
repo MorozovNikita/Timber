@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 #include "FileDefs.h"
 #include "TextureSizes.h"
@@ -136,8 +137,38 @@ int main()
     float logSpeedX{ 1000 };
     float logSpeedY{ -1500 };
 
+    bool acceptInput{ false };
+
+    SoundBuffer chopBuffer;
+    if (chopBuffer.loadFromFile(TimberFiles::path_chop_sound))
+        std::cerr << "Failed to upload "s << TimberFiles::path_chop_sound << " file."s << std::endl;
+    Sound chop(chopBuffer);
+
+    SoundBuffer deathBuffer;
+    if (deathBuffer.loadFromFile(TimberFiles::path_death_sound))
+        std::cerr << "Failed to upload "s << TimberFiles::path_death_sound << " file."s << std::endl;
+    Sound death(deathBuffer);
+
+    SoundBuffer ootBuffer;
+    if (ootBuffer.loadFromFile(TimberFiles::path_out_of_time_sound))
+        std::cerr << "Failed to upload "s << TimberFiles::path_out_of_time_sound << " file."s << std::endl;
+    Sound outOfTime(ootBuffer);
+
     while (window.isOpen())
     {
+        while (std::optional event = window.pollEvent())
+        {
+            if (event->is<sf::Event::Closed>())
+            {
+                window.close();
+            }
+            else if (event->is<sf::Event::KeyReleased>() && !paused)
+            {
+                acceptInput = true;
+                spriteAxe.setPosition({ 2000, spriteAxe.getPosition().y });
+            }
+        }
+
         if (Keyboard::isKeyPressed(Keyboard::Key::Escape))
             window.close();
 
@@ -147,6 +178,67 @@ int main()
 
             score = 0;
             timeRemaining = 6;
+
+            for (int i = 1; i < NUM_BRANCHES; ++i)
+                branchPositions[i] = side::NONE;
+
+            spriteRIP.setPosition({ 675, 2000 });
+
+            spritePlayer.setPosition({ 580, 720 });
+
+            acceptInput = true;
+        }
+
+        if (acceptInput)
+        {
+            if (Keyboard::isKeyPressed(Keyboard::Key::Right))
+            {
+                playerSide = side::RIGHT;
+
+                ++score;
+
+                // time addition formula
+                timeRemaining += (2. / score) + .15;
+
+                spriteAxe.setPosition({ AXE_POSITION_RIGHT, spriteAxe.getPosition().y });
+
+                spritePlayer.setPosition({ 1200, 720 });
+
+                updateBranches(score);
+
+                spriteLog.setPosition({ 810, 720 });
+                logSpeedX = -5000;
+                logActive = true;
+
+                acceptInput = false;
+
+                chop.play();
+            }
+
+            if (Keyboard::isKeyPressed(Keyboard::Key::Left))
+            {
+                playerSide = side::LEFT;
+
+                ++score;
+
+                // time addition formula
+                timeRemaining += (2. / score) + .15;
+
+                spriteAxe.setPosition({ AXE_POSITION_LEFT, spriteAxe.getPosition().y });
+
+                spritePlayer.setPosition({ 580, 720 });
+
+                updateBranches(score);
+
+                spriteLog.setPosition({ 810, 720 });
+
+                logSpeedX = 5000;
+                logActive = true;
+
+                acceptInput = false;
+
+                chop.play();
+            }
         }
 
         if (!paused)
@@ -165,6 +257,8 @@ int main()
                 FloatRect textRect = messageText.getLocalBounds();
                 messageText.setOrigin({ textRect.position.x + textRect.size.x / 2.f, textRect.position.y + textRect.size.y / 2.f });
                 messageText.setPosition({ 1920 / 2.f, 1080 / 2.f });
+
+                outOfTime.play();
             }
 
             if (!beeActive)
@@ -191,6 +285,35 @@ int main()
             scoreText.setString(ss.str());
 
             placementBranches();
+
+            if (logActive)
+            {
+                spriteLog.setPosition({ spriteLog.getPosition().x + (logSpeedX * dt.asSeconds()), 
+                                        spriteLog.getPosition().y + (logSpeedY * dt.asSeconds()) });
+                if (spriteLog.getPosition().x < -100 || spriteLog.getPosition().x > 2000)
+                {
+                    logActive = false;
+                    spriteLog.setPosition({ 810, 720 });
+                }
+            }
+
+            if (branchPositions[5] == playerSide)
+            {
+                paused = true;
+                acceptInput = false;
+
+                spriteRIP.setPosition({ 525, 760 });
+                spritePlayer.setPosition({ 2000, 660 });
+
+                messageText.setString("DEAD!");
+
+                FloatRect textRect = messageText.getLocalBounds();
+                
+                messageText.setOrigin({ textRect.position.x + textRect.size.x / 2.f, textRect.position.y + textRect.size.y / 2.f });
+                messageText.setPosition({ 1920 / 2.f, 1080 / 2.f });
+
+                death.play();
+            }
         }
 
         window.clear();

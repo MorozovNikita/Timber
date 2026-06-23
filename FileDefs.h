@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string_view>
 
 namespace TimberFiles
@@ -17,5 +18,9 @@ static const std::string_view axeName		 = "graphics/axe.png"sv;
 static const std::string_view logName		 = "graphics/log.png"sv;
 
 static const std::string_view fontName		 = "fonts/KOMIKABG.ttf"sv;
+
+const std::filesystem::path path_chop_sound		   = "sound/chop.wav";
+const std::filesystem::path path_death_sound	   = "sound/death.wav";
+const std::filesystem::path path_out_of_time_sound = "sound/out_of_time.wav";
 
 }
